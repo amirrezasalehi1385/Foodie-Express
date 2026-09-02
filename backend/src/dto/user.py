@@ -1,4 +1,32 @@
 from pydantic import BaseModel, EmailStr, Field
+from datetime import timedelta
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from config.settings import settings
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    full_name: str | None = None
+    disabled: bool | None = None
+
+
+class UserInDB(User):
+    hashed_password: str
+
 
 
 class UserCreate(BaseModel):
@@ -32,3 +60,4 @@ class UserResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
