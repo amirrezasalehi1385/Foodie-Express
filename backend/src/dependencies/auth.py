@@ -67,3 +67,15 @@ async def get_current_admin(
         )
 
     return current_user
+
+async def get_current_restaurant_owner(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User: 
+
+    if current_user.role != UserRole.RESTAURANT_OWNER : 
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Restaurant owner access required",
+        )
+
+    return current_user
