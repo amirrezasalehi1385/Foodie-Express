@@ -11,8 +11,8 @@ from typing import List
 
 
 router = APIRouter(
-    prefix="/user",
-    tags=["User"],
+    prefix="/users",
+    tags=["Users"],
 )
 
 
