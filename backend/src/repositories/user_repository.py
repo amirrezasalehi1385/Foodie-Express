@@ -18,3 +18,4 @@ class UserRepository(BaseRepository):
         stmt = select(User).where(User.email == email)
 
         return self.db.scalar(stmt)
+    

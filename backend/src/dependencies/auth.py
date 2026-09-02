@@ -10,16 +10,18 @@ from services.user_service import UserService
 from dto.auth import TokenData
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 from config.database import get_db
+from models.user import User, UserRole
+
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db),
 ):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
     try:
         payload = jwt.decode(
@@ -53,3 +55,15 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+async def get_current_admin(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+
+    return current_user

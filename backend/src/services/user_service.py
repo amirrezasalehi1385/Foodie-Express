@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from dto.user import UserCreate
+from dto.user import UserCreate, UserUpdate, AdminUserUpdate
 from models.user import User, UserRole, UserStatus
 from repositories.user_repository import UserRepository
-
+from typing import List
 
 class UserService:
     def __init__(self, db: Session):
@@ -29,3 +29,50 @@ class UserService:
         )
 
         return self.user_repository.create(user)
+    
+    def update_user(self, user: User, user_data: UserUpdate) -> User:
+        update_data = user_data.model_dump(exclude_unset=True)
+
+        if "email" in update_data:
+            existing_user = self.user_repository.get_by_email(
+                update_data["email"]
+            )
+
+            if existing_user and existing_user.id != user.id:
+                raise ValueError("Email already registered")
+
+        return self.user_repository.update(
+            user,
+            update_data,
+        )
+    def get_users(self) -> list[User] : 
+        return self.user_repository.get_all()
+
+    def admin_update_user(
+        self,
+        user: User,
+        user_data: AdminUserUpdate,
+    ) -> User:
+
+        update_data = user_data.model_dump(exclude_unset=True)
+
+        if "phone" in update_data:
+            existing_user = self.user_repository.get_by_phone(
+                update_data["phone"]
+            )
+
+            if existing_user and existing_user.id != user.id:
+                raise ValueError("Phone number already registered")
+
+        if "email" in update_data:
+            existing_user = self.user_repository.get_by_email(
+                update_data["email"]
+            )
+
+            if existing_user and existing_user.id != user.id:
+                raise ValueError("Email already registered")
+
+        return self.user_repository.update(
+            user,
+            update_data,
+        )

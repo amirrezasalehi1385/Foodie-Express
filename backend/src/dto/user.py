@@ -1,33 +1,11 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timedelta
 from typing import Annotated
-
+from models.user import UserRole, UserStatus
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from config.settings import settings
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
 
 class UserCreate(BaseModel):
     full_name: str = Field(
@@ -61,3 +39,39 @@ class UserResponse(BaseModel):
         "from_attributes": True
     }
 
+class UserUpdate(BaseModel):
+    full_name: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+    )
+    email: EmailStr | None = None
+    profile_image_url: str | None = Field(
+        default=None,
+        max_length=500,
+    )
+
+class AdminUserUpdate(BaseModel):
+    full_name: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+    )
+
+    phone: str | None = Field(
+        default=None,
+        min_length=10,
+        max_length=20,
+        pattern=r"^09\d{9}$",
+    )
+
+    email: EmailStr | None = None
+
+    role: UserRole | None = None
+
+    status: UserStatus | None = None
+
+    profile_image_url: str | None = Field(
+        default=None,
+        max_length=500,
+    )
