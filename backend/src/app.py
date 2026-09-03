@@ -4,6 +4,7 @@ from routes.auth import router as auth_router
 from routes.users import router as user_router
 from routes.restaurants import router as restaurant_router
 from routes.addresses import router as address_router
+from routes.menus import router as menu_router
 app = FastAPI()
 
 
@@ -29,5 +30,10 @@ app.include_router(
 
 app.include_router(
     address_router,
+    prefix="/api"
+)
+
+app.include_router(
+    menu_router,
     prefix="/api"
 )

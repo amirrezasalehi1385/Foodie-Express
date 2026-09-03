@@ -50,3 +50,9 @@ class RestaurantRepository(BaseRepository):
         self.db.refresh(restaurant)
 
         return restaurant
+    def get_by_owner_id(self, owner_id: int):
+        return (
+            self.db.query(Restaurant)
+            .filter(Restaurant.owner_id == owner_id)
+            .all()
+        )

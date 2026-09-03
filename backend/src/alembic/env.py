@@ -9,6 +9,7 @@ from config.database import Base
 from models.user import User
 from models.restaurant import Restaurant
 from models.address import Address
+from models.menu import Menu
 from config.settings import settings
 
 

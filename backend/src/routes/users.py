@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 
 from dto.user import UserResponse, UserUpdate, AdminUserUpdate
 from services.user_service import UserService
-from dependencies.auth import get_current_user, get_current_admin
+from dependencies.auth import get_current_user, get_current_admin, get_current_restaurant_owner
 from models.user import User
 from config.database import get_db
 from typing import List
 from dto.address import AddressCreate, AddressResponse
 from services.address_service import AddressService
+from dto.restaurant import RestaurantResponse
+from services.restaurant_service import RestaurantService
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
@@ -177,3 +179,19 @@ def get_my_addresses(
     return address_service.get_user_addresses(
         user_id=current_user.id,
     )
+
+
+@router.get(
+    "/me/restaurants",
+    response_model=list[RestaurantResponse],
+)
+def get_my_restaurants(
+    current_user: Annotated[User, Depends(get_current_restaurant_owner)],
+    db: Session = Depends(get_db),
+):
+    restaurant_service = RestaurantService(db)
+
+    return restaurant_service.get_my_restaurants(
+        user_id=current_user.id
+    )
+

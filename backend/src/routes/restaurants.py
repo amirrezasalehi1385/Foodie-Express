@@ -6,8 +6,10 @@ from dependencies.auth import get_current_restaurant_owner, get_current_admin_or
 from config.database import get_db
 from dependencies.auth import get_current_user
 from dto.restaurant import RestaurantCreate, RestaurantResponse, RestaurantUpdate
+from dto.menu import MenuCreate, MenuResponse
 from models.user import User, UserRole
 from services.restaurant_service import RestaurantService
+from services.menu_service import MenuService
 
 
 router = APIRouter(
@@ -139,3 +141,51 @@ def delete_restaurant(
 
     return None
 
+
+
+@router.post(
+    "/{restaurant_id}/menus",
+    response_model=MenuResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_menu(
+    restaurant_id: int,
+    menu_data: MenuCreate,
+    current_user: Annotated[
+        User,
+        Depends(get_current_restaurant_owner),
+    ],
+    db: Session = Depends(get_db),
+):
+    menu_service = MenuService(db)
+
+    try:
+
+        menu = menu_service.create_menu(
+            restaurant_id=restaurant_id,
+            menu_data=menu_data,
+            user_id=current_user.id,
+        )
+
+        db.commit()
+
+        return menu
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.get(
+    "/{restaurant_id}/menus",
+    response_model=list[MenuResponse],
+)
+def get_restaurant_menus(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+):
+    menu_service = MenuService(db)
+
+    return menu_service.get_restaurant_menus(
+        restaurant_id=restaurant_id,
+    )

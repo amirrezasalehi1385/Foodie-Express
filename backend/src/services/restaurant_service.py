@@ -80,3 +80,7 @@ class RestaurantService:
             )
 
         self.restaurant_repository.delete(restaurant)
+
+    def get_my_restaurants(self, user_id: int):
+        return self.restaurant_repository.get_by_owner_id(user_id)
+    
