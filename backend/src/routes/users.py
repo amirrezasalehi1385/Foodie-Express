@@ -75,6 +75,7 @@ def get_users(
 )
 def get_user(
     user_id: int,
+    current_admin: Annotated[User, Depends(get_current_admin)],
     db: Session = Depends(get_db),
 ):
     user_service = UserService(db)

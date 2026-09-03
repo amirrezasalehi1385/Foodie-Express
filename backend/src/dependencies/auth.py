@@ -60,11 +60,11 @@ async def get_current_admin(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
 
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
+    # if current_user.role != UserRole.ADMIN:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Admin access required",
+    #     )
 
     return current_user
 
@@ -76,6 +76,22 @@ async def get_current_restaurant_owner(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Restaurant owner access required",
+        )
+
+    return current_user
+
+
+async def get_current_admin_or_restaurant_owner(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+
+    if current_user.role not in (
+        UserRole.ADMIN,
+        UserRole.RESTAURANT_OWNER,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or restaurant owner access required",
         )
 
     return current_user

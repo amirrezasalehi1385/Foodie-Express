@@ -56,3 +56,10 @@ class RestaurantResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class RestaurantUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    address: str | None = None
+    phone: str | None = None
+    is_active: bool | None = None
