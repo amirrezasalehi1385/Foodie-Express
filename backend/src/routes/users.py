@@ -8,8 +8,8 @@ from dependencies.auth import get_current_user, get_current_admin
 from models.user import User
 from config.database import get_db
 from typing import List
-
-
+from dto.address import AddressCreate, AddressResponse
+from services.address_service import AddressService
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
@@ -128,4 +128,52 @@ def admin_update_user(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         )
-    
+
+
+
+@router.post(
+    "/me/addresses",
+    response_model=AddressResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_address(
+    address_data: AddressCreate,
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
+    db: Session = Depends(get_db),
+):
+    address_service = AddressService(db)
+
+    try:
+        address = address_service.create_address(
+            address_data=address_data,
+            user_id=current_user.id,
+        )
+
+        db.commit()
+
+        return address
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.get(
+    "/me/addresses",
+    response_model=list[AddressResponse],
+)
+def get_my_addresses(
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
+    db: Session = Depends(get_db),
+):
+    address_service = AddressService(db)
+
+    return address_service.get_user_addresses(
+        user_id=current_user.id,
+    )
