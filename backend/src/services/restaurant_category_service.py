@@ -139,7 +139,6 @@ class RestaurantCategoryService:
                 detail="You do not have permission to manage this restaurant",
             )
 
-        # حذف IDهای تکراری، بدون به‌هم‌زدن ترتیب
         category_ids = list(dict.fromkeys(category_ids))
 
         for category_id in category_ids:

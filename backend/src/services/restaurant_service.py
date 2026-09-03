@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from dto.restaurant import RestaurantCreate, RestaurantUpdate
 from models.restaurant import Restaurant, RestaurantStatus
+from models.user import User, UserRole
 from repositories.restaurant_repository import RestaurantRepository
 
 
@@ -54,6 +55,7 @@ class RestaurantService:
         self,
         restaurant_id: int,
         restaurant_data: RestaurantUpdate,
+        current_user: User,
     ):
         restaurant = self.restaurant_repository.get_by_id(restaurant_id)
 
@@ -63,6 +65,16 @@ class RestaurantService:
                 detail="Restaurant not found",
             )
 
+        
+        if (
+            current_user.role != UserRole.ADMIN
+            and restaurant.owner_id != current_user.id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to update this restaurant",
+            )
+        
         return self.restaurant_repository.update(
             restaurant_id,
             restaurant_data,
@@ -71,6 +83,7 @@ class RestaurantService:
     def delete_restaurant(
         self,
         restaurant_id: int,
+        current_user: User,
     ):
         restaurant = self.restaurant_repository.get_by_id(restaurant_id)
 
@@ -80,8 +93,16 @@ class RestaurantService:
                 detail="Restaurant not found",
             )
 
-        self.restaurant_repository.delete(restaurant)
+        if (
+            current_user.role != UserRole.ADMIN
+            and restaurant.owner_id != current_user.id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete this restaurant",
+            )
 
+        self.restaurant_repository.delete(restaurant)
     def get_my_restaurants(self, user_id: int):
         return self.restaurant_repository.get_by_owner_id(user_id)
     

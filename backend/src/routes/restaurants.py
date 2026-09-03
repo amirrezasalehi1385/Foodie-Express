@@ -123,6 +123,7 @@ def update_restaurant(
         restaurant = restaurant_service.update_restaurant(
             restaurant_id,
             restaurant_data,
+            current_user
         )
 
         db.commit()
@@ -151,6 +152,7 @@ def delete_restaurant(
     try: 
         restaurant_service.delete_restaurant(
             restaurant_id,
+            current_user,
         )
 
         db.commit()
