@@ -7,9 +7,11 @@ from config.database import get_db
 from dependencies.auth import get_current_user
 from dto.restaurant import RestaurantCreate, RestaurantResponse, RestaurantUpdate
 from dto.menu import MenuCreate, MenuResponse
+from dto.food import FoodResponse, FoodCreate
 from models.user import User, UserRole
 from services.restaurant_service import RestaurantService
 from services.menu_service import MenuService
+from services.food_service import FoodService
 from dto.restaurant_category import (
     RestaurantCategoryAssign,
     RestaurantCategoryResponse,
@@ -271,3 +273,50 @@ def remove_category_from_restaurant(
         raise
 
     return None
+
+
+@router.post(
+    "/{restaurant_id}/foods",
+    response_model=FoodResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_food(
+    restaurant_id: int,
+    food_data: FoodCreate,
+    current_user: Annotated[
+        User,
+        Depends(get_current_restaurant_owner),
+    ],
+    db: Session = Depends(get_db),
+):
+    food_service = FoodService(db)
+
+    try:
+        food = food_service.create_food(
+            restaurant_id=restaurant_id,
+            food_data=food_data,
+            current_user=current_user,
+        )
+
+        db.commit()
+
+        return food
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.get(
+    "/{restaurant_id}/foods",
+    response_model=list[FoodResponse],
+)
+def get_restaurant_foods(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+):
+    food_service = FoodService(db)
+
+    return food_service.get_restaurant_foods(
+        restaurant_id=restaurant_id,
+    )
