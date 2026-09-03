@@ -10,6 +10,9 @@ from models.user import User
 from models.restaurant import Restaurant
 from models.address import Address
 from models.menu import Menu
+from models.food import Food
+from models.restaurant_category import RestaurantCategory
+from models.restaurant_category_map import RestaurantCategoryMap
 from config.settings import settings
 
 

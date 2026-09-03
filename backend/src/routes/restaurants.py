@@ -10,7 +10,11 @@ from dto.menu import MenuCreate, MenuResponse
 from models.user import User, UserRole
 from services.restaurant_service import RestaurantService
 from services.menu_service import MenuService
-
+from dto.restaurant_category import (
+    RestaurantCategoryAssign,
+    RestaurantCategoryResponse,
+)
+from services.restaurant_category_service import RestaurantCategoryService
 
 router = APIRouter(
     prefix="/restaurants",
@@ -189,3 +193,81 @@ def get_restaurant_menus(
     return menu_service.get_restaurant_menus(
         restaurant_id=restaurant_id,
     )
+
+
+@router.get(
+    "/{restaurant_id}/categories",
+    response_model=list[RestaurantCategoryResponse],
+)
+def get_restaurant_categories(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+):
+    category_service = RestaurantCategoryService(db)
+
+    return category_service.get_restaurant_categories(
+        restaurant_id=restaurant_id,
+    )
+
+
+@router.post(
+    "/{restaurant_id}/categories",
+    response_model=list[RestaurantCategoryResponse],
+    status_code=status.HTTP_200_OK,
+)
+def add_categories_to_restaurant(
+    restaurant_id: int,
+    category_data: RestaurantCategoryAssign,
+    current_user: Annotated[
+        User,
+        Depends(get_current_admin_or_restaurant_owner),
+    ],
+    db: Session = Depends(get_db),
+):
+    category_service = RestaurantCategoryService(db)
+
+    try:
+        categories = category_service.add_categories_to_restaurant(
+            restaurant_id=restaurant_id,
+            category_ids=category_data.category_ids,
+            current_user=current_user,
+        )
+
+        db.commit()
+
+        return categories
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.delete(
+    "/{restaurant_id}/categories/{category_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_category_from_restaurant(
+    restaurant_id: int,
+    category_id: int,
+    current_user: Annotated[
+        User,
+        Depends(get_current_admin_or_restaurant_owner),
+    ],
+    db: Session = Depends(get_db),
+):
+    category_service = RestaurantCategoryService(db)
+
+    try:
+        category_service.remove_category_from_restaurant(
+            restaurant_id=restaurant_id,
+            category_id=category_id,
+            current_user=current_user,
+        )
+
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return None
