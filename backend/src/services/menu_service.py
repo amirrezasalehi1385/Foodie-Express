@@ -3,10 +3,9 @@ from sqlalchemy.orm import Session
 
 from dto.menu import MenuCreate, MenuUpdate
 from models.menu import Menu
-from models.user import UserRole, User
+from models.user import User, UserRole
 from repositories.menu_repository import MenuRepository
 from repositories.restaurant_repository import RestaurantRepository
-from services.user_service import UserService
 
 
 class MenuService:

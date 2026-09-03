@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
-from models.restaurant import RestaurantStatus
 from decimal import Decimal
+
+from pydantic import BaseModel, Field
+
+from models.restaurant import RestaurantStatus
 
 
 class RestaurantCreate(BaseModel):

@@ -1,9 +1,10 @@
+
 from sqlalchemy.orm import Session
 
-from dto.user import UserCreate, UserUpdate, AdminUserUpdate
+from dto.user import AdminUserUpdate, UserCreate, UserUpdate
 from models.user import User, UserRole, UserStatus
 from repositories.user_repository import UserRepository
-from typing import List
+
 
 class UserService:
     def __init__(self, db: Session):

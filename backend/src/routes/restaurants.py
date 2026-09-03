@@ -1,22 +1,25 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from dependencies.auth import get_current_restaurant_owner, get_current_admin_or_restaurant_owner
+
 from config.database import get_db
-from dependencies.auth import get_current_user
-from dto.restaurant import RestaurantCreate, RestaurantResponse, RestaurantUpdate
+from dependencies.auth import (
+    get_current_admin_or_restaurant_owner,
+    get_current_restaurant_owner,
+)
+from dto.food import FoodCreate, FoodResponse
 from dto.menu import MenuCreate, MenuResponse
-from dto.food import FoodResponse, FoodCreate
-from models.user import User, UserRole
-from services.restaurant_service import RestaurantService
-from services.menu_service import MenuService
-from services.food_service import FoodService
+from dto.restaurant import RestaurantCreate, RestaurantResponse, RestaurantUpdate
 from dto.restaurant_category import (
     RestaurantCategoryAssign,
     RestaurantCategoryResponse,
 )
+from models.user import User
+from services.food_service import FoodService
+from services.menu_service import MenuService
 from services.restaurant_category_service import RestaurantCategoryService
+from services.restaurant_service import RestaurantService
 
 router = APIRouter(
     prefix="/restaurants",
@@ -24,6 +27,8 @@ router = APIRouter(
 )
 
 
+# Create a new restaurant. Only accessible to authenticated users with the
+# RESTAURANT_OWNER role; the new restaurant is linked to the current owner's id.
 @router.post(
     "/",
     response_model=RestaurantResponse,
@@ -52,6 +57,8 @@ def create_restaurant(
         raise
 
 
+# List restaurants with pagination, optional text search, and an optional
+# is_active filter. Public endpoint, no authentication required.
 @router.get(
     "/",
     response_model=list[RestaurantResponse],
@@ -73,7 +80,8 @@ def get_restaurants(
     )
 
 
-
+# Get a single restaurant by its id. Public endpoint. Returns 404 if no
+# restaurant exists with the given id.
 @router.get(
     "/{restaurant_id}",
     response_model=RestaurantResponse,
@@ -95,6 +103,8 @@ def get_restaurant(
     return restaurant
 
 
+# Partially update a restaurant's fields. Accessible to an admin or the
+# restaurant's owner.
 @router.patch(
     "/{restaurant_id}",
     response_model=RestaurantResponse,
@@ -122,6 +132,9 @@ def update_restaurant(
         db.rollback()
         raise
 
+
+# Delete a restaurant by id. Accessible to an admin or the restaurant's
+# owner. Returns 204 with no content on success.
 @router.delete(
     "/{restaurant_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -145,10 +158,10 @@ def delete_restaurant(
         db.rollback()
         raise
 
-    return None
 
 
-
+# Create a new menu under a specific restaurant. Only accessible to
+# authenticated users with the RESTAURANT_OWNER role.
 @router.post(
     "/{restaurant_id}/menus",
     response_model=MenuResponse,
@@ -182,6 +195,7 @@ def create_menu(
         raise
 
 
+# List all menus belonging to a specific restaurant. Public endpoint.
 @router.get(
     "/{restaurant_id}/menus",
     response_model=list[MenuResponse],
@@ -197,6 +211,7 @@ def get_restaurant_menus(
     )
 
 
+# List all categories assigned to a specific restaurant. Public endpoint.
 @router.get(
     "/{restaurant_id}/categories",
     response_model=list[RestaurantCategoryResponse],
@@ -212,6 +227,8 @@ def get_restaurant_categories(
     )
 
 
+# Assign one or more categories to a restaurant. Accessible to an admin or
+# the restaurant's owner. Returns the restaurant's updated category list.
 @router.post(
     "/{restaurant_id}/categories",
     response_model=list[RestaurantCategoryResponse],
@@ -244,6 +261,8 @@ def add_categories_to_restaurant(
         raise
 
 
+# Remove a single category from a restaurant. Accessible to an admin or the
+# restaurant's owner. Returns 204 with no content on success.
 @router.delete(
     "/{restaurant_id}/categories/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -272,9 +291,10 @@ def remove_category_from_restaurant(
         db.rollback()
         raise
 
-    return None
 
 
+# Create a new food item under a specific restaurant. Only accessible to
+# authenticated users with the RESTAURANT_OWNER role.
 @router.post(
     "/{restaurant_id}/foods",
     response_model=FoodResponse,
@@ -307,6 +327,7 @@ def create_food(
         raise
 
 
+# List all food items belonging to a specific restaurant. Public endpoint.
 @router.get(
     "/{restaurant_id}/foods",
     response_model=list[FoodResponse],

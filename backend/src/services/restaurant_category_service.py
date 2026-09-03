@@ -5,14 +5,13 @@ from dto.restaurant_category import (
     RestaurantCategoryCreate,
     RestaurantCategoryUpdate,
 )
-from models.user import User, UserRole
 from models.restaurant_category import RestaurantCategory
-
-from repositories.restaurant_category_repository import (
-    RestaurantCategoryRepository,
-)
+from models.user import User, UserRole
 from repositories.restaurant_category_map_repository import (
     RestaurantCategoryMapRepository,
+)
+from repositories.restaurant_category_repository import (
+    RestaurantCategoryRepository,
 )
 from repositories.restaurant_repository import RestaurantRepository
 

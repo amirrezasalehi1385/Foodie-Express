@@ -6,16 +6,13 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from dependencies.auth import (
     get_current_admin_or_restaurant_owner,
-    get_current_restaurant_owner,
 )
 from dto.food import (
-    FoodCreate,
     FoodResponse,
     FoodUpdate,
 )
 from models.user import User
 from services.food_service import FoodService
-
 
 router = APIRouter(
     prefix="/foods",
@@ -23,6 +20,7 @@ router = APIRouter(
 )
 
 
+# Get a single food item by its id. Public endpoint.
 @router.get(
     "/{food_id}",
     response_model=FoodResponse,
@@ -38,6 +36,8 @@ def get_food(
     )
 
 
+# Partially update a food item. Accessible to an admin or the owning
+# restaurant's owner.
 @router.patch(
     "/{food_id}",
     response_model=FoodResponse,
@@ -69,6 +69,8 @@ def update_food(
         raise
 
 
+# Delete a food item by id. Accessible to an admin or the owning restaurant's
+# owner. Returns 204 with no content on success.
 @router.delete(
     "/{food_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -94,5 +96,3 @@ def delete_food(
     except Exception:
         db.rollback()
         raise
-
-    return None

@@ -1,23 +1,29 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from dto.user import UserResponse, UserUpdate, AdminUserUpdate
-from services.user_service import UserService
-from dependencies.auth import get_current_user, get_current_admin, get_current_restaurant_owner
-from models.user import User
 from config.database import get_db
-from typing import List
+from dependencies.auth import (
+    get_current_admin,
+    get_current_restaurant_owner,
+    get_current_user,
+)
 from dto.address import AddressCreate, AddressResponse
-from services.address_service import AddressService
 from dto.restaurant import RestaurantResponse
+from dto.user import AdminUserUpdate, UserResponse, UserUpdate
+from models.user import User
+from services.address_service import AddressService
 from services.restaurant_service import RestaurantService
+from services.user_service import UserService
+
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
 )
 
 
+# Get the currently authenticated user's own profile.
 @router.get(
     "/me",
     response_model=UserResponse,
@@ -27,12 +33,13 @@ def read_users_me(
 ):
     return current_user
 
+
+# Update the currently authenticated user's own profile. Raises 409 on a
+# conflicting value (e.g. duplicate phone/email).
 @router.patch(
     "/me",
     response_model=UserResponse,
 )
-
-
 def update_my_profile(
     user_data: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -59,6 +66,7 @@ def update_my_profile(
         )
 
 
+# List all users. Admin-only endpoint.
 @router.get(
     "/",
     response_model=list[UserResponse],
@@ -71,6 +79,7 @@ def get_users(
     return user_service.get_users()
 
 
+# Get a single user by id. Admin-only endpoint. Raises 404 if not found.
 @router.get(
     "/{user_id}",
     response_model=UserResponse,
@@ -93,6 +102,8 @@ def get_user(
     return user
 
 
+# Update any user's account as an admin (e.g. role, status). Admin-only
+# endpoint. Raises 404 if the user doesn't exist, 409 on a conflicting value.
 @router.patch(
     "/{user_id}",
     response_model=UserResponse,
@@ -132,7 +143,7 @@ def admin_update_user(
         )
 
 
-
+# Add a new address for the currently authenticated user.
 @router.post(
     "/me/addresses",
     response_model=AddressResponse,
@@ -163,6 +174,7 @@ def create_address(
         raise
 
 
+# List all addresses belonging to the currently authenticated user.
 @router.get(
     "/me/addresses",
     response_model=list[AddressResponse],
@@ -181,6 +193,8 @@ def get_my_addresses(
     )
 
 
+# List all restaurants owned by the currently authenticated user.
+# Requires the RESTAURANT_OWNER role.
 @router.get(
     "/me/restaurants",
     response_model=list[RestaurantResponse],
@@ -194,4 +208,3 @@ def get_my_restaurants(
     return restaurant_service.get_my_restaurants(
         user_id=current_user.id
     )
-

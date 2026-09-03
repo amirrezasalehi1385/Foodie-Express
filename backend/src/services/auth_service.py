@@ -4,11 +4,12 @@ from dto.user import UserCreate
 from models.user import User
 from services.user_service import UserService
 from utils.security import (
-    get_password_hash,
-    verify_password,
     DUMMY_HASH,
     create_access_token,
+    get_password_hash,
+    verify_password,
 )
+
 
 class AuthService:
     def __init__(self, db: Session):

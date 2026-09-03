@@ -5,10 +5,10 @@ from enum import Enum
 from sqlalchemy import (
     BigInteger,
     DateTime,
+    ForeignKey,
     Numeric,
     String,
     Text,
-    ForeignKey,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

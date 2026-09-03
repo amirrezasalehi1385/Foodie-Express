@@ -5,10 +5,9 @@ from sqlalchemy.orm import Session
 
 from config.database import get_db
 from dependencies.auth import get_current_user
-from dto.address import AddressCreate, AddressResponse, AddressUpdate
+from dto.address import AddressResponse, AddressUpdate
 from models.user import User
 from services.address_service import AddressService
-
 
 router = APIRouter(
     prefix="/addresses",
@@ -16,6 +15,7 @@ router = APIRouter(
 )
 
 
+# Get a single address by id, scoped to the current authenticated user.
 @router.get(
     "/{address_id}",
     response_model=AddressResponse,
@@ -36,6 +36,7 @@ def get_address(
     )
 
 
+# Partially update an address belonging to the current authenticated user.
 @router.patch(
     "/{address_id}",
     response_model=AddressResponse,
@@ -67,7 +68,8 @@ def update_address(
         raise
 
 
-
+# Delete an address belonging to the current authenticated user. Returns 204
+# with no content on success.
 @router.delete(
     "/{address_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -93,5 +95,3 @@ def delete_address(
     except Exception:
         db.rollback()
         raise
-
-    return None

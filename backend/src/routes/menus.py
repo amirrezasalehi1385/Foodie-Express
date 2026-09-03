@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from config.database import get_db
-from dependencies.auth import get_current_user, get_current_restaurant_owner, get_current_admin_or_restaurant_owner
+from dependencies.auth import (
+    get_current_admin_or_restaurant_owner,
+)
 from dto.menu import MenuResponse, MenuUpdate
 from models.user import User
 from services.menu_service import MenuService
-
 
 router = APIRouter(
     prefix="/menus",
@@ -16,6 +17,7 @@ router = APIRouter(
 )
 
 
+# Get a single menu by its id. Public endpoint.
 @router.get(
     "/{menu_id}",
     response_model=MenuResponse,
@@ -30,6 +32,8 @@ def get_menu(
         menu_id=menu_id,
     )
 
+
+# Partially update a menu. Accessible to an admin or the owning restaurant's owner.
 @router.patch(
     "/{menu_id}",
     response_model=MenuResponse,
@@ -60,7 +64,9 @@ def update_menu(
         db.rollback()
         raise
 
-    
+
+# Delete a menu by id. Accessible to an admin or the owning restaurant's owner.
+# Returns 204 with no content on success.
 @router.delete(
     "/{menu_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -86,5 +92,3 @@ def delete_menu(
     except Exception:
         db.rollback()
         raise
-
-    return None

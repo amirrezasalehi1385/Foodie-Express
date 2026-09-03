@@ -13,13 +13,13 @@ from dto.restaurant_category import (
 from models.user import User
 from services.restaurant_category_service import RestaurantCategoryService
 
-
 router = APIRouter(
     prefix="/restaurant-categories",
     tags=["Restaurant Categories"],
 )
 
 
+# Create a new restaurant category. Requires an authenticated user.
 @router.post(
     "",
     response_model=RestaurantCategoryResponse,
@@ -50,6 +50,7 @@ def create_category(
         raise
 
 
+# List all restaurant categories. Public endpoint, no authentication required.
 @router.get(
     "",
     response_model=list[RestaurantCategoryResponse],
@@ -62,6 +63,7 @@ def get_categories(
     return category_service.get_all_categories()
 
 
+# Get a single restaurant category by its id. Public endpoint.
 @router.get(
     "/{category_id}",
     response_model=RestaurantCategoryResponse,
@@ -77,6 +79,7 @@ def get_category(
     )
 
 
+# Partially update a restaurant category. Requires an authenticated user.
 @router.patch(
     "/{category_id}",
     response_model=RestaurantCategoryResponse,
@@ -108,6 +111,8 @@ def update_category(
         raise
 
 
+# Delete a restaurant category by id. Requires an authenticated user.
+# Returns 204 with no content on success.
 @router.delete(
     "/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -133,5 +138,3 @@ def delete_category(
     except Exception:
         db.rollback()
         raise
-
-    return None

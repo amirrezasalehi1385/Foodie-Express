@@ -9,13 +9,14 @@ from dto.menu_item import MenuItemCreate, MenuItemResponse
 from models.user import User
 from services.menu_item_service import MenuItemService
 
-
 router = APIRouter(
     prefix="/menus",
     tags=["Menu Items"],
 )
 
 
+# Add a food item to a menu (or update it if it already exists, per PUT
+# semantics). Accessible to an admin or the owning restaurant's owner.
 @router.put(
     "/{menu_id}/items/{food_id}",
     response_model=MenuItemResponse,
@@ -49,6 +50,8 @@ def add_food_to_menu(
         raise
 
 
+# Remove a food item from a menu. Accessible to an admin or the owning
+# restaurant's owner. Returns 204 with no content on success.
 @router.delete(
     "/{menu_id}/items/{food_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -77,9 +80,8 @@ def remove_food_from_menu(
         db.rollback()
         raise
 
-    return None
 
-
+# List all food items on a menu. Public endpoint.
 @router.get(
     "/{menu_id}/items",
     response_model=list[MenuItemResponse],

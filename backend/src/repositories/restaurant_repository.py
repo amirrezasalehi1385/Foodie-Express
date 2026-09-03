@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 
+from dto.restaurant import RestaurantUpdate
 from models.restaurant import Restaurant
 from repositories.base_repository import BaseRepository
-from dto.restaurant import RestaurantUpdate
+
 
 class RestaurantRepository(BaseRepository):
     def __init__(self, db: Session):

@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
 from dto.restaurant import RestaurantCreate, RestaurantUpdate
 from models.restaurant import Restaurant, RestaurantStatus
 from repositories.restaurant_repository import RestaurantRepository
-from models.user import User, UserRole
+
 
 class RestaurantService:
     def __init__(self, db: Session):

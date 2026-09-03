@@ -1,11 +1,8 @@
+
 from pydantic import BaseModel, EmailStr, Field
-from datetime import timedelta
-from typing import Annotated
+
 from models.user import UserRole, UserStatus
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from config.settings import settings
+
 
 class UserCreate(BaseModel):
     full_name: str = Field(

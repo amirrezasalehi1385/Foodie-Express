@@ -1,21 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import pool
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, pool
 
 from alembic import context
-
 from config.database import Base
-from models.user import User
-from models.restaurant import Restaurant
-from models.address import Address
-from models.menu import Menu
-from models.food import Food
-from models.menu_item import MenuItem
-from models.restaurant_category import RestaurantCategory
-from models.restaurant_category_map import RestaurantCategoryMap
 from config.settings import settings
-
 
 config = context.config
 

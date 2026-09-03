@@ -2,15 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from config.database import get_db
+from dto.auth import LoginRequest, TokenResponse
 from dto.user import UserCreate, UserResponse
 from services.auth_service import AuthService
-from dto.auth import TokenResponse, LoginRequest
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
 )
 
 
+# Register a new user account. Public endpoint. Raises 409 if a user with
+# the given identifier (e.g. phone/email) already exists.
 @router.post(
     "/register",
     response_model=UserResponse,
@@ -36,6 +39,10 @@ def register(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         )
+
+
+# Authenticate a user with phone and password, returning a bearer access
+# token. Public endpoint. Raises 401 if credentials are invalid.
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -63,5 +70,3 @@ def login(
             detail=str(exc),
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    
