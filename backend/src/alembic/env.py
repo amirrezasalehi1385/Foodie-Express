@@ -5,6 +5,16 @@ from sqlalchemy import create_engine, pool
 from alembic import context
 from config.database import Base
 from config.settings import settings
+from models.user import User
+from models.address import Address
+from models.food import Food
+from models.food_category import FoodCategory
+from models.menu import Menu
+from models.menu_item import MenuItem
+from models.restaurant import Restaurant
+from models.restaurant_category_map import RestaurantCategoryMap
+from models.restaurant_category import RestaurantCategory
+from models.food_category_map import FoodCategoryMap
 
 config = context.config
 

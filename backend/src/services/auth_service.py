@@ -55,6 +55,7 @@ class AuthService:
             user_data=user_data,
             password_hash=password_hash,
         )
+    
     def login(
         self,
         phone: str,
