@@ -16,6 +16,8 @@ from models.restaurant_category_map import RestaurantCategoryMap
 from models.restaurant_category import RestaurantCategory
 from models.food_category_map import FoodCategoryMap
 from models.favorite_restaurant import FavoriteRestaurant
+from models.cart import Cart
+from models.cart_items import CartItem
 
 config = context.config
 

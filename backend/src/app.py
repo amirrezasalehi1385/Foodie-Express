@@ -10,6 +10,7 @@ from routes.restaurants import router as restaurant_router
 from routes.users import router as user_router
 from routes.food_categories import router as food_category_router
 from routes.favorite_restaurant import router as favorite_router
+from routes.cart import router as cart_router
 app = FastAPI()
 
 
@@ -66,5 +67,10 @@ app.include_router(
 
 app.include_router(
     favorite_router,
+    prefix="/api",
+)
+
+app.include_router(
+    cart_router,
     prefix="/api",
 )
