@@ -1,16 +1,22 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Integer,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from config.database import Base
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.cart_items import CartItem
+    from models.cart import Cart
     
-class Cart(Base):
-    __tablename__ = "carts"
+from config.database import Base
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
 
     id: Mapped[int] = mapped_column(
         BigInteger,
@@ -18,16 +24,20 @@ class Cart(Base):
         autoincrement=True,
     )
 
-    user_id: Mapped[int] = mapped_column(
+    cart_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id"),
+        ForeignKey("carts.id"),
         nullable=False,
-        unique=True,
     )
 
-    restaurant_id: Mapped[int] = mapped_column(
+    food_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("restaurants.id"),
+        ForeignKey("foods.id"),
+        nullable=False,
+    )
+
+    quantity: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 
@@ -44,8 +54,15 @@ class Cart(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    items: Mapped[list["CartItem"]] = relationship(
-        "CartItem",
-        back_populates="cart",
-        cascade="all, delete-orphan",
+    cart: Mapped["Cart"] = relationship(
+        "Cart",
+        back_populates="items",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "cart_id",
+            "food_id",
+            name="uq_cart_item_cart_food",
+        ),
     )
