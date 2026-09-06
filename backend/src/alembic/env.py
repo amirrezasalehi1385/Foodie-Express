@@ -18,6 +18,8 @@ from models.food_category_map import FoodCategoryMap
 from models.favorite_restaurant import FavoriteRestaurant
 from models.cart import Cart
 from models.cart_items import CartItem
+from models.order import Order
+from models.order_items import OrderItem
 
 config = context.config
 

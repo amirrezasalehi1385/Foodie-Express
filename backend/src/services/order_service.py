@@ -1,0 +1,341 @@
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from decimal import Decimal
+from repositories.cart_repository import (
+    CartRepository
+)
+from repositories.cart_repository import CartRepository
+from repositories.cart_item_repository import CartItemRepository
+from repositories.order_repository import OrderRepository
+from repositories.order_item_repository import OrderItemRepository
+from repositories.food_repository import FoodRepository
+from services.cart_service import CartService
+from services.address_service import AddressService
+from models.order_items import OrderItem
+from models.order import OrderStatus, Order
+from models.cancelation_reason import CancellationReason
+class OrderService:
+    def __init__(self, db: Session):
+        self.cart_repository = CartRepository(db)
+        self.cart_item_repository = CartItemRepository(db)
+        self.order_repository = OrderRepository(db)
+        self.order_item_repository = OrderItemRepository(db)
+        self.food_repository = FoodRepository(db)
+        self.cart_service = CartService(db)
+        self.address_service = AddressService(db)
+
+from decimal import Decimal
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from models.order import Order, OrderStatus
+from models.order_items import OrderItem
+
+from repositories.cart_item_repository import CartItemRepository
+from repositories.order_repository import OrderRepository
+from repositories.order_item_repository import OrderItemRepository
+from repositories.food_repository import FoodRepository
+
+from services.cart_service import CartService
+from services.address_service import AddressService
+from services.restaurant_service import RestaurantService
+
+class OrderService:
+    def __init__(self, db: Session):
+        self.cart_item_repository = CartItemRepository(db)
+        self.order_repository = OrderRepository(db)
+        self.order_item_repository = OrderItemRepository(db)
+        self.food_repository = FoodRepository(db)
+
+        self.cart_service = CartService(db)
+        self.address_service = AddressService(db)
+
+    def create_order(
+        self,
+        user_id: int,
+        delivery_address_id: int,
+    ):
+        cart = self.cart_service.get_cart(user_id)
+
+        if cart is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cart not found",
+            )
+
+        if cart.restaurant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cart does not belong to a restaurant",
+            )
+
+        restaurant_id = cart.restaurant_id
+
+        cart_items = self.cart_item_repository.get_by_cart_id(
+            cart_id=cart.id
+        )
+
+        if not cart_items:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cart is empty",
+            )
+
+        address = self.address_service.get_address_by_id(
+            address_id=delivery_address_id,
+            user_id=user_id,
+        )
+
+        if address is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Delivery address not found",
+            )
+
+        subtotal = Decimal("0.00")
+        foods = []
+
+        for cart_item in cart_items:
+            food = self.food_repository.get_by_id(
+                cart_item.food_id
+            )
+
+            if food is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Food {cart_item.food_id} not found",
+                )
+
+            if food.restaurant_id != restaurant_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Food does not belong to this restaurant",
+                )
+
+            if not food.is_available:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Food '{food.name}' is not available",
+                )
+
+            item_total = food.price * cart_item.quantity
+            subtotal += item_total
+
+            foods.append(
+                {
+                    "cart_item": cart_item,
+                    "food": food,
+                }
+            )
+
+        discount_amount = Decimal("0.00")
+        delivery_fee = Decimal("0.00")
+        tax_amount = Decimal("0.00")
+
+        total_amount = (
+            subtotal
+            - discount_amount
+            + delivery_fee
+            + tax_amount
+        )
+
+        order = self.order_repository.create(
+            Order(
+                user_id=user_id,
+                restaurant_id=restaurant_id,
+                delivery_address_id=delivery_address_id,
+                subtotal=subtotal,
+                discount_amount=discount_amount,
+                delivery_fee=delivery_fee,
+                tax_amount=tax_amount,
+                total_amount=total_amount,
+                status=OrderStatus.PENDING_PAYMENT,
+            )
+        )
+
+        for item in foods:
+            cart_item = item["cart_item"]
+            food = item["food"]
+
+            order_item = OrderItem(
+                order_id=order.id,
+                food_id=food.id,
+                quantity=cart_item.quantity,
+                unit_price=food.price,
+                total_price=food.price * cart_item.quantity,
+            )
+
+            self.order_item_repository.create(
+                order_item=order_item
+            )
+
+        self.cart_service.clear_cart(user_id=user_id)
+
+        return order
+
+    def get_order_by_id(
+            self,
+            user_id: int,
+            order_id: int,
+    ):
+        order = self.order_repository.get_by_id(order_id=order_id)
+
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        if order.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this order",
+            )
+
+        return order
+
+    def get_user_orders(
+            self,
+            user_id: int,
+            page: int = 1,
+            limit: int = 10,
+    ):
+        offset = (page - 1) * limit
+
+        orders = self.order_repository.get_by_user_id(
+            user_id=user_id,
+            offset=offset,
+            limit=limit,
+        )
+
+        return orders
+
+    def get_order_items(
+            self,
+            user_id: int,
+            order_id: int,
+            page: int = 1,
+            limit: int = 10,
+    ):
+        order = self.order_repository.get_by_id(order_id=order_id)
+
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        if order.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this order",
+            )
+
+        offset = (page - 1) * limit
+
+        return self.order_item_repository.get_by_order_id(
+            order_id=order_id,
+            offset=offset,
+            limit=limit,
+        )
+
+    def cancel_order(
+        self,
+        user_id: int,
+        order_id: int,
+        reason: CancellationReason,
+        note: str | None = None,
+    ):
+        order = self.get_order_by_id(
+            user_id=user_id,
+            order_id=order_id,
+        )
+
+        if order.status not in {
+            OrderStatus.PENDING_PAYMENT,
+            OrderStatus.PAID,
+            OrderStatus.ACCEPTED,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Order cannot be cancelled",
+            )
+
+        order.status = OrderStatus.CANCELLED
+
+        order.cancellation_reason = reason.value
+
+        if note:
+            order.cancellation_reason += f": {note}"
+
+        self.order_repository.update(order)
+
+        return order
+    def get_restaurant_orders(
+            self,
+            restaurant_id: int,
+            owner_id: int,
+            page: int = 1,
+            limit: int = 10,
+    ):
+        restaurant = self.restaurant_repository.get_by_id_and_owner(
+            restaurant_id=restaurant_id,
+            owner_id=owner_id,
+        )
+
+        if not restaurant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this restaurant",
+            )
+
+        offset = (page - 1) * limit
+
+        return self.order_repository.get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+            offset=offset,
+            limit=limit,
+        )
+        
+    def change_order_status(
+            self,
+            restaurant_id: int,
+            order_id: int,
+            new_status: OrderStatus,
+    ):
+        order = self.order_repository.get_by_id(order_id=order_id)
+
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        if order.restaurant_id != restaurant_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this order",
+            )
+
+        allowed_transitions = {
+            OrderStatus.PAID: {OrderStatus.ACCEPTED},
+            OrderStatus.ACCEPTED: {OrderStatus.PREPARING},
+            OrderStatus.PREPARING: {OrderStatus.READY},
+            OrderStatus.READY: {OrderStatus.DELIVERING},
+            OrderStatus.DELIVERING: {OrderStatus.DELIVERED},
+        }
+
+        if new_status not in allowed_transitions.get(order.status, set()):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot change order status from {order.status} to {new_status}",
+            )
+
+        order.status = new_status
+
+        self.order_repository.update(order)
+
+        return order
+
+    

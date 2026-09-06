@@ -105,4 +105,17 @@ class RestaurantService:
         self.restaurant_repository.delete(restaurant)
     def get_my_restaurants(self, user_id: int):
         return self.restaurant_repository.get_by_owner_id(user_id)
-    
+
+    def get_by_id_and_owner(
+            self,
+            restaurant_id: int,
+            owner_id: int,
+    ):
+        return (
+            self.db.query(Restaurant)
+            .filter(
+                Restaurant.id == restaurant_id,
+                Restaurant.owner_id == owner_id,
+            )
+            .first()
+        )
