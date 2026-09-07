@@ -14,6 +14,7 @@ from services.address_service import AddressService
 from models.order_items import OrderItem
 from models.order import OrderStatus, Order
 from models.cancelation_reason import CancellationReason
+from models.user import User, UserRole
 class OrderService:
     def __init__(self, db: Session):
         self.cart_repository = CartRepository(db)
@@ -36,7 +37,7 @@ from repositories.cart_item_repository import CartItemRepository
 from repositories.order_repository import OrderRepository
 from repositories.order_item_repository import OrderItemRepository
 from repositories.food_repository import FoodRepository
-
+from repositories.restaurant_repository import RestaurantRepository
 from services.cart_service import CartService
 from services.address_service import AddressService
 from services.restaurant_service import RestaurantService
@@ -50,6 +51,8 @@ class OrderService:
 
         self.cart_service = CartService(db)
         self.address_service = AddressService(db)
+        self.restaruant_service = RestaurantService(db)
+        self.restaurant_repository = RestaurantRepository(db)
 
     def create_order(
         self,
@@ -300,7 +303,7 @@ class OrderService:
         
     def change_order_status(
             self,
-            restaurant_id: int,
+            current_user: User,
             order_id: int,
             new_status: OrderStatus,
     ):
@@ -312,25 +315,52 @@ class OrderService:
                 detail="Order not found",
             )
 
-        if order.restaurant_id != restaurant_id:
+        if current_user.role == UserRole.CUSTOMER : 
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have access to this order",
             )
 
-        allowed_transitions = {
-            OrderStatus.PAID: {OrderStatus.ACCEPTED},
-            OrderStatus.ACCEPTED: {OrderStatus.PREPARING},
-            OrderStatus.PREPARING: {OrderStatus.READY},
-            OrderStatus.READY: {OrderStatus.DELIVERING},
-            OrderStatus.DELIVERING: {OrderStatus.DELIVERED},
-        }
+        if current_user.role == UserRole.RESTAURANT_OWNER : 
+            restaruant = self.restaruant_service.get_restaurant_by_id(restaurant_id=order.restaurant_id)
+
+            if restaruant.owner_id != current_user.id : 
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have access to this order",
+                )
+
+        
+
+        if current_user.role == UserRole.RESTAURANT_OWNER:
+            allowed_transitions = {
+                OrderStatus.PAID: {OrderStatus.ACCEPTED},
+                OrderStatus.ACCEPTED: {OrderStatus.PREPARING},
+                OrderStatus.PREPARING: {OrderStatus.READY},
+            }
+
+        elif current_user.role == UserRole.DELIVERY:
+            # delivery = self.delivery_repository.get_by_order_id(order.id)
+            # if not delivery or delivery.delivery_man_id != current_user.id:
+            #     raise HTTPException(status_code=403, detail="You do not have access to this order")
+
+            allowed_transitions = {
+                OrderStatus.ASSIGNED: {OrderStatus.DELIVERING},
+                OrderStatus.DELIVERING: {OrderStatus.DELIVERED},
+            }
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to change order status",
+            )
 
         if new_status not in allowed_transitions.get(order.status, set()):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Cannot change order status from {order.status} to {new_status}",
             )
+
 
         order.status = new_status
 

@@ -9,8 +9,8 @@ from services.order_service import OrderService
 
 
 router = APIRouter(
-    prefix="/order",
-    tags=["Order"],
+    prefix="/orders",
+    tags=["Orders"],
 )
 
 @router.post(
@@ -89,7 +89,7 @@ def change_order_status(
 
     try:
         order = order_service.change_order_status(
-            restaurant_id=...,
+            current_user = current_user,
             order_id=order_id,
             new_status=data.status,
         )

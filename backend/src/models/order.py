@@ -23,7 +23,8 @@ class OrderStatus(str, Enum):
     ACCEPTED = "ACCEPTED"
     PREPARING = "PREPARING"
     READY = "READY"
-    DELIVERING = "DELIVERING"
+    ASSIGNED = "ASSIGNED"        # driver claimed it, hasn't picked up yet
+    DELIVERING = "DELIVERING"    # driver has physically picked up food
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     PAYMENT_FAILED = "PAYMENT_FAILED"
