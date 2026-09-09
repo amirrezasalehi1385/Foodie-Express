@@ -45,7 +45,11 @@ class Payment(Base):
         Numeric(12, 2),
         nullable=False,
     )
-
+    # add to Payment model:
+    wallet_amount_used: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2),
+        nullable=False, 
+        default=Decimal("0.00"))
     method: Mapped[PaymentMethod] = mapped_column(
         SQLEnum(
             PaymentMethod,

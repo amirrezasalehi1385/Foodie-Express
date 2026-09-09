@@ -21,6 +21,8 @@ from models.cart_items import CartItem
 from models.order import Order
 from models.order_items import OrderItem
 from models.payment import Payment
+from models.wallet import Wallet
+from models.transaction import Transaction
 config = context.config
 
 if config.config_file_name is not None:
