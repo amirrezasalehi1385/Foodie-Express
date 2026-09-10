@@ -2,13 +2,13 @@ from decimal import Decimal
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
-
 from models.order import OrderStatus
-from pydantic import BaseModel
 from models.cancelation_reason import CancellationReason
+
 
 class OrderCreate(BaseModel):
     delivery_address_id: int
+    discount_code: str | None = None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -30,7 +30,7 @@ class OrderResponse(BaseModel):
     user_id: int
     restaurant_id: int
     delivery_address_id: int
-    # discount_id: int | None
+    discount_id: int | None
 
     subtotal: Decimal
     discount_amount: Decimal

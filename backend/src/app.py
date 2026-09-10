@@ -13,6 +13,7 @@ from routes.favorite_restaurant import router as favorite_router
 from routes.order import router as order_router
 from routes.cart import router as cart_router
 from routes.payments import router as payment_router
+from routes.discounts import router as discount_router
 app = FastAPI()
 
 
@@ -84,5 +85,10 @@ app.include_router(
 
 app.include_router(
     payment_router,
+    prefix="/api"
+)
+
+app.include_router(
+    discount_router,
     prefix="/api"
 )

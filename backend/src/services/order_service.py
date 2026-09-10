@@ -1,9 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from decimal import Decimal
-from repositories.cart_repository import (
-    CartRepository
-)
+from models.discount import Discount
 from repositories.cart_repository import CartRepository
 from repositories.cart_item_repository import CartItemRepository
 from repositories.order_repository import OrderRepository
@@ -40,6 +38,7 @@ from repositories.food_repository import FoodRepository
 from repositories.restaurant_repository import RestaurantRepository
 from services.cart_service import CartService
 from services.address_service import AddressService
+from services.discount_service import DiscountService
 from services.restaurant_service import RestaurantService
 
 class OrderService:
@@ -53,11 +52,13 @@ class OrderService:
         self.address_service = AddressService(db)
         self.restaruant_service = RestaurantService(db)
         self.restaurant_repository = RestaurantRepository(db)
+        self.discount_service = DiscountService(db)
 
     def create_order(
         self,
         user_id: int,
         delivery_address_id: int,
+        discount_code: str | None = None,
     ):
         cart = self.cart_service.get_cart(user_id)
 
@@ -132,7 +133,19 @@ class OrderService:
                 }
             )
 
+        discount = None
         discount_amount = Decimal("0.00")
+
+        if discount_code:
+            discount, discount_amount = self.discount_service.validate_and_calculate(
+                code=discount_code,
+                user_id=user_id,
+                restaurant_id=restaurant_id,
+                subtotal=subtotal,
+            )
+
+        
+
         delivery_fee = Decimal("0.00")
         tax_amount = Decimal("0.00")
 
@@ -150,6 +163,7 @@ class OrderService:
                 delivery_address_id=delivery_address_id,
                 subtotal=subtotal,
                 discount_amount=discount_amount,
+                discount_id=discount.id if discount else None,
                 delivery_fee=delivery_fee,
                 tax_amount=tax_amount,
                 total_amount=total_amount,
@@ -171,6 +185,13 @@ class OrderService:
 
             self.order_item_repository.create(
                 order_item=order_item
+            )
+        if discount is not None:
+            self.discount_service.record_usage(
+                discount_id=discount.id,
+                user_id=user_id,
+                order_id=order.id,
+                amount_saved=discount_amount,
             )
 
         self.cart_service.clear_cart(user_id=user_id)

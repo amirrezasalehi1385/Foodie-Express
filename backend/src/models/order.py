@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from models.user import User
     from models.restaurant import Restaurant
     from models.address import Address
-    # from models.discount import Discount
+    from models.discount import Discount
     from models.order_items import OrderItem
     # from models.order_status_history import OrderStatusHistory
 
@@ -56,11 +56,11 @@ class Order(Base):
         nullable=False,
     )
 
-    # discount_id: Mapped[int | None] = mapped_column(
-    #     BigInteger,
-    #     ForeignKey("discounts.id"),
-    #     nullable=True,
-    # )
+    discount_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("discounts.id"),
+        nullable=True,
+    )
 
     subtotal: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
@@ -130,9 +130,9 @@ class Order(Base):
         "Address",
     )
 
-    # discount: Mapped["Discount | None"] = relationship(
-    #     "Discount",
-    # )
+    discount: Mapped["Discount | None"] = relationship(
+        "Discount",
+    )
 
     items: Mapped[list["OrderItem"]] = relationship(
         "OrderItem",

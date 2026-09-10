@@ -29,6 +29,7 @@ def create_order(
         order = order_service.create_order(
             user_id=current_user.id,
             delivery_address_id=data.delivery_address_id,
+            discount_code=data.discount_code
         )
 
         db.commit()
