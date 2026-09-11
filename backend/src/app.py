@@ -14,6 +14,8 @@ from routes.order import router as order_router
 from routes.cart import router as cart_router
 from routes.payments import router as payment_router
 from routes.discounts import router as discount_router
+from routes.delivery import router as delivery_router
+
 app = FastAPI()
 
 
@@ -91,4 +93,10 @@ app.include_router(
 app.include_router(
     discount_router,
     prefix="/api"
+)
+
+
+app.include_router(
+    delivery_router,
+    prefix="/api",
 )

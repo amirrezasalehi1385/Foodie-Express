@@ -336,22 +336,31 @@ class OrderService:
                 detail="Order not found",
             )
 
-        if current_user.role == UserRole.CUSTOMER : 
+        if current_user.role == UserRole.CUSTOMER:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have access to this order",
             )
 
-        if current_user.role == UserRole.RESTAURANT_OWNER : 
+        if current_user.role == UserRole.RESTAURANT_OWNER:
             restaruant = self.restaruant_service.get_restaurant_by_id(restaurant_id=order.restaurant_id)
 
-            if restaruant.owner_id != current_user.id : 
+            if restaruant.owner_id != current_user.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="You do not have access to this order",
                 )
 
-        
+        delivery = None
+
+        if current_user.role == UserRole.DELIVERY:
+            delivery = self.delivery_repository.get_by_order_id(order_id=order.id)
+
+            if not delivery or delivery.delivery_man_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have access to this order",
+                )
 
         if current_user.role == UserRole.RESTAURANT_OWNER:
             allowed_transitions = {
@@ -361,10 +370,6 @@ class OrderService:
             }
 
         elif current_user.role == UserRole.DELIVERY:
-            # delivery = self.delivery_repository.get_by_order_id(order.id)
-            # if not delivery or delivery.delivery_man_id != current_user.id:
-            #     raise HTTPException(status_code=403, detail="You do not have access to this order")
-
             allowed_transitions = {
                 OrderStatus.ASSIGNED: {OrderStatus.DELIVERING},
                 OrderStatus.DELIVERING: {OrderStatus.DELIVERED},
@@ -382,11 +387,32 @@ class OrderService:
                 detail=f"Cannot change order status from {order.status} to {new_status}",
             )
 
-
         order.status = new_status
-
         self.order_repository.update(order)
+
+        if delivery is not None:
+            if new_status == OrderStatus.DELIVERING:
+                self.delivery_service.mark_picked_up(delivery)
+            elif new_status == OrderStatus.DELIVERED:
+                self.delivery_service.mark_delivered(delivery)
 
         return order
 
-    
+    def get_available_orders(
+        self,
+        current_user: User,
+        page: int = 1,
+        limit: int = 10,
+    ):
+        if current_user.role != UserRole.DELIVERY:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only delivery accounts can view available orders",
+            )
+
+        offset = (page - 1) * limit
+
+        return self.order_repository.get_available_for_delivery(
+            offset=offset,
+            limit=limit,
+        )

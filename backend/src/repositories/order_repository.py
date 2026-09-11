@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models.order import Order
-
+from models.order import Order, OrderStatus
 
 class OrderRepository:
     def __init__(self, db: Session):
@@ -51,4 +50,16 @@ class OrderRepository:
             .filter(Order.restaurant_id == restaurant_id)
             .all()
         )
-    
+    def get_available_for_delivery(
+        self,
+        offset: int = 0,
+        limit: int = 10,
+    ):
+        return (
+            self.db.query(Order)
+            .filter(Order.status == OrderStatus.READY)
+            .order_by(Order.created_at.asc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
