@@ -26,6 +26,7 @@ from models.transaction import Transaction
 from models.discount import Discount
 from models.discount_usage import DiscountUsage
 from models.delivery import Delivery
+from models.review import Review
 config = context.config
 
 if config.config_file_name is not None:
