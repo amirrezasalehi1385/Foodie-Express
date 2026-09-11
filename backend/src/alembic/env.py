@@ -27,6 +27,7 @@ from models.discount import Discount
 from models.discount_usage import DiscountUsage
 from models.delivery import Delivery
 from models.review import Review
+from models.order_status_history import OrderStatusHistory
 config = context.config
 
 if config.config_file_name is not None:
