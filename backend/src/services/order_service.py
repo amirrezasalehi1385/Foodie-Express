@@ -20,7 +20,7 @@ from services.address_service import AddressService
 from services.discount_service import DiscountService
 from services.restaurant_service import RestaurantService
 from services.delivery_service import DeliveryService
-
+from services.order_status_history_service import OrderStatusHistoryService
 
 class OrderService:
     def __init__(self, db: Session):
@@ -36,7 +36,8 @@ class OrderService:
         self.discount_service = DiscountService(db)
         self.delivery_repository = DeliveryRepository(db)
         self.delivery_service = DeliveryService(db)
-        
+        self.order_status_history_repository = OrderStatusHistoryService(db)
+
     def create_order(
         self,
         user_id: int,
@@ -178,6 +179,12 @@ class OrderService:
             )
 
         self.cart_service.clear_cart(user_id=user_id)
+
+        self.order_status_history_repository.create(
+            order_id=order.id,
+            status=OrderStatus.PENDING_PAYMENT,
+            changed_by=user_id,
+        )
 
         return order
 
@@ -369,7 +376,14 @@ class OrderService:
             )
 
         order.status = new_status
+
         self.order_repository.update(order)
+
+        self.order_status_history_repository.create(
+            order_id=order.id,
+            status=new_status,
+            changed_by=current_user.id,
+        )
 
         if delivery is not None:
             if new_status == OrderStatus.DELIVERING:
@@ -385,12 +399,6 @@ class OrderService:
         page: int = 1,
         limit: int = 10,
     ):
-        if current_user.role != UserRole.DELIVERY_MAN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only delivery accounts can view available orders",
-            )
-
         offset = (page - 1) * limit
 
         return self.order_repository.get_available_for_delivery(

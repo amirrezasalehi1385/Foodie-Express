@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from config.database import get_db
-from dependencies.auth import get_current_user
+from dependencies.auth import get_current_user, get_current_delivery_man
 from models.user import User
 from models.order import OrderStatus
 from dto.delivery import DeliveryResponse
@@ -23,7 +23,7 @@ router = APIRouter(
 def get_available_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_delivery_man),
     db: Session = Depends(get_db),
 ):
     order_service = OrderService(db)
@@ -42,7 +42,7 @@ def get_available_orders(
 )
 def claim_order(
     order_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_delivery_man),
     db: Session = Depends(get_db),
 ):
     delivery_service = DeliveryService(db)
@@ -86,7 +86,7 @@ def get_delivery_by_order(
 def get_my_deliveries(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_delivery_man),
     db: Session = Depends(get_db),
 ):
     delivery_service = DeliveryService(db)

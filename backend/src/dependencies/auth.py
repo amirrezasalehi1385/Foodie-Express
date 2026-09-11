@@ -97,3 +97,14 @@ async def get_current_admin_or_restaurant_owner(
         )
 
     return current_user
+
+async def get_current_delivery_man(
+        current_user: Annotated[User, Depends(get_current_user)],
+
+) -> User:
+    if current_user.role != UserRole.DELIVERY_MAN :
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Delivery man access required",
+        )
+    return current_user

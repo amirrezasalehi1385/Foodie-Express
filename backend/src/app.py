@@ -16,7 +16,8 @@ from routes.payments import router as payment_router
 from routes.discounts import router as discount_router
 from routes.deliveries import router as delivery_router
 from routes.reviews import router as review_router
-
+from routes.order_status_histories import router as order_status_histories_router
+from routes.wallet import router as wallet_router
 app = FastAPI()
 
 
@@ -108,3 +109,15 @@ app.include_router(
     review_router,
     prefix="/api",
 )
+
+app.include_router(
+    order_status_histories_router,
+    prefix="/api"
+)
+
+
+app.include_router(
+    wallet_router,
+    prefix="/api"
+)
+

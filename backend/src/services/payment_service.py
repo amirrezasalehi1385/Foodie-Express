@@ -90,7 +90,7 @@ class PaymentService:
 
         return payment
 
-    def confirm_payment(self, payment_token: str, card_number: str):
+    def confirm_payment(self,current_user: User, payment_token: str, card_number: str):
         payment = self.payment_repository.get_by_token_for_update(payment_token=payment_token)
 
         if not payment:
@@ -112,6 +112,13 @@ class PaymentService:
 
             order.status = OrderStatus.PAID
             self.order_repository.update(order)
+
+            self.order_status_history_repository.create(
+                order_id=order.id,
+                status=OrderStatus.PAID,
+                changed_by=current_user.id,
+            )
+            
         else:
             payment.status = PaymentStatus.FAILED
             payment.failure_reason = random.choice([

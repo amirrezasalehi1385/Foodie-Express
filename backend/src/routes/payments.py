@@ -91,12 +91,15 @@ def get_checkout_details(
 def confirm_payment(
     token: str,
     data: PaymentConfirmRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+
 ):
     payment_service = PaymentService(db)
 
     try:
         payment = payment_service.confirm_payment(
+            current_user=current_user,
             payment_token=token,
             card_number=data.card_number,
         )

@@ -10,7 +10,6 @@ from models.delivery import Delivery, DeliveryStatus
 from repositories.delivery_repository import DeliveryRepository
 from repositories.order_repository import OrderRepository
 
-
 class DeliveryService:
     def __init__(self, db: Session):
         self.delivery_repository = DeliveryRepository(db)
@@ -21,12 +20,7 @@ class DeliveryService:
         current_user: User,
         order_id: int,
     ):
-        if current_user.role != UserRole.DELIVERY_MAN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only delivery accounts can claim orders",
-            )
-
+        
         order = self.order_repository.get_by_id(order_id=order_id)
 
         if not order:
@@ -58,6 +52,12 @@ class DeliveryService:
 
         order.status = OrderStatus.ASSIGNED
         self.order_repository.update(order)
+
+        self.order_status_history_repository.create(
+            order_id=order.id,
+            status=OrderStatus.ASSIGNED,
+            changed_by=current_user.id,
+        )
 
         return delivery
 
