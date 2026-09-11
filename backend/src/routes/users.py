@@ -126,6 +126,7 @@ def admin_update_user(
 
     try:
         user = user_service.admin_update_user(
+            current_admin=current_admin,
             user=user,
             user_data=user_data,
         )

@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 from dto.user import AdminUserUpdate, UserCreate, UserUpdate
 from models.user import User, UserRole, UserStatus
 from repositories.user_repository import UserRepository
-
+from repositories.admin_actions_log_repository import AdminActionLogRepository
 
 class UserService:
     def __init__(self, db: Session):
         self.user_repository = UserRepository(db)
+        self.admin_actions_log_repository = AdminActionLogRepository(db)
 
     def get_user_by_id(self, user_id: int) -> User | None:
         return self.user_repository.get_by_id(user_id)
@@ -51,6 +52,7 @@ class UserService:
 
     def admin_update_user(
         self,
+        current_admin: User,
         user: User,
         user_data: AdminUserUpdate,
     ) -> User:
@@ -73,7 +75,21 @@ class UserService:
             if existing_user and existing_user.id != user.id:
                 raise ValueError("Email already registered")
 
-        return self.user_repository.update(
+        updated_user = self.user_repository.update(
             user,
             update_data,
         )
+
+        changed_fields = ", ".join(update_data.keys())
+
+        self.admin_actions_log_repository.create(
+            admin_id=current_admin.id,
+            action="UPDATE_USER",
+            target_type="user",
+            target_id=user.id,
+            description=f"Updated fields: {changed_fields}",
+        )
+
+        return updated_user
+
+        

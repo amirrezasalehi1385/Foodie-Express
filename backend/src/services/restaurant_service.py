@@ -51,6 +51,27 @@ class RestaurantService:
         return self.restaurant_repository.get_by_id(restaurant_id)
 
 
+
+
+from repositories.admin_actions_log_repository import AdminActionLogRepository
+
+
+class RestaurantService:
+    def __init__(self, db: Session):
+        self.restaurant_repository = RestaurantRepository(db)
+        self.admin_action_log_repository = AdminActionLogRepository(db)
+
+    ...
+
+    from repositories.admin_actions_log_repository import AdminActionLogRepository
+
+
+class RestaurantService:
+    def __init__(self, db: Session):
+        self.restaurant_repository = RestaurantRepository(db)
+        self.admin_action_log_repository = AdminActionLogRepository(db)
+
+
     def update_restaurant(
         self,
         restaurant_id: int,
@@ -65,7 +86,6 @@ class RestaurantService:
                 detail="Restaurant not found",
             )
 
-        
         if (
             current_user.role != UserRole.ADMIN
             and restaurant.owner_id != current_user.id
@@ -74,11 +94,26 @@ class RestaurantService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to update this restaurant",
             )
-        
-        return self.restaurant_repository.update(
+
+        updated_restaurant = self.restaurant_repository.update(
             restaurant_id,
             restaurant_data,
         )
+
+        if current_user.role == UserRole.ADMIN and restaurant.owner_id != current_user.id:
+            changed_fields = ", ".join(
+                restaurant_data.model_dump(exclude_unset=True).keys()
+            )
+
+            self.admin_action_log_repository.create(
+                admin_id=current_user.id,
+                action="UPDATE_RESTAURANT",
+                target_type="restaurant",
+                target_id=restaurant.id,
+                description=f"Updated fields: {changed_fields}",
+            )
+
+        return updated_restaurant
 
     def delete_restaurant(
         self,
@@ -102,7 +137,17 @@ class RestaurantService:
                 detail="You do not have permission to delete this restaurant",
             )
 
+        if current_user.role == UserRole.ADMIN and restaurant.owner_id != current_user.id:
+            self.admin_action_log_repository.create(
+                admin_id=current_user.id,
+                action="DELETE_RESTAURANT",
+                target_type="restaurant",
+                target_id=restaurant.id,
+                description=f"Deleted restaurant '{restaurant.name}'",
+            )
+
         self.restaurant_repository.delete(restaurant)
+
     def get_my_restaurants(self, user_id: int):
         return self.restaurant_repository.get_by_owner_id(user_id)
 

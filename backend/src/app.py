@@ -18,6 +18,7 @@ from routes.deliveries import router as delivery_router
 from routes.reviews import router as review_router
 from routes.order_status_histories import router as order_status_histories_router
 from routes.wallet import router as wallet_router
+from routes.admin_actions_logs import router as admin_actions_log
 app = FastAPI()
 
 
@@ -121,3 +122,7 @@ app.include_router(
     prefix="/api"
 )
 
+app.include_router(
+    admin_actions_log,
+    prefix="/api"
+)

@@ -170,4 +170,18 @@ class ReviewService:
                 detail="You do not have access to this review",
             )
 
+        is_admin_moderation = (
+            current_user.role == UserRole.ADMIN
+            and review.user_id != current_user.id
+        )
+
+        if is_admin_moderation:
+            self.admin_action_log_repository.create(
+                admin_id=current_user.id,
+                action="DELETE_REVIEW",
+                target_type="review",
+                target_id=review.id,
+                description=f"Deleted review (rating={review.rating}) by user {review.user_id}",
+            )
+
         self.review_repository.delete(review)

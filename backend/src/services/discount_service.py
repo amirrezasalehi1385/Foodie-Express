@@ -207,6 +207,15 @@ class DiscountService:
             valid_until=valid_until,
         )
 
+        if current_user.role == UserRole.ADMIN:
+            self.admin_action_log_repository.create(
+                admin_id=current_user.id,
+                action="CREATE_DISCOUNT",
+                target_type="discount",
+                target_id=discount.id,
+                description=f"Created discount code '{code}' ({type.value}, value={value})",
+            )
+
         return discount
 
 
@@ -342,4 +351,15 @@ class DiscountService:
 
         self.discount_repository.update(discount)
 
+        if current_user.role == UserRole.ADMIN:
+            self.admin_action_log_repository.create(
+                admin_id=current_user.id,
+                action="DEACTIVATE_DISCOUNT",
+                target_type="discount",
+                target_id=discount.id,
+                description=f"Deactivated discount code '{discount.code}'",
+            )
+
         return discount
+
+    
