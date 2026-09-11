@@ -20,6 +20,8 @@ from services.food_service import FoodService
 from services.menu_service import MenuService
 from services.restaurant_category_service import RestaurantCategoryService
 from services.restaurant_service import RestaurantService
+from dto.order import OrderResponse
+from services.order_service import OrderService
 
 router = APIRouter(
     prefix="/restaurants",
@@ -342,4 +344,27 @@ def get_restaurant_foods(
 
     return food_service.get_restaurant_foods(
         restaurant_id=restaurant_id,
+    )
+
+@router.get(
+    "/{restaurant_id}/orders",
+    response_model=list[OrderResponse],
+)
+def get_restaurant_orders(
+    restaurant_id: int,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    current_user: Annotated[
+        User,
+        Depends(get_current_restaurant_owner),
+    ] = None,
+    db: Session = Depends(get_db),
+):
+    order_service = OrderService(db)
+
+    return order_service.get_restaurant_orders(
+        restaurant_id=restaurant_id,
+        owner_id=current_user.id,
+        page=page,
+        limit=limit,
     )

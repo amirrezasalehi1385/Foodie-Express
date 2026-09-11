@@ -1,28 +1,3 @@
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from decimal import Decimal
-from models.discount import Discount
-from repositories.cart_repository import CartRepository
-from repositories.cart_item_repository import CartItemRepository
-from repositories.order_repository import OrderRepository
-from repositories.order_item_repository import OrderItemRepository
-from repositories.food_repository import FoodRepository
-from services.cart_service import CartService
-from services.address_service import AddressService
-from models.order_items import OrderItem
-from models.order import OrderStatus, Order
-from models.cancelation_reason import CancellationReason
-from models.user import User, UserRole
-class OrderService:
-    def __init__(self, db: Session):
-        self.cart_repository = CartRepository(db)
-        self.cart_item_repository = CartItemRepository(db)
-        self.order_repository = OrderRepository(db)
-        self.order_item_repository = OrderItemRepository(db)
-        self.food_repository = FoodRepository(db)
-        self.cart_service = CartService(db)
-        self.address_service = AddressService(db)
-
 from decimal import Decimal
 
 from fastapi import HTTPException, status
@@ -30,16 +5,22 @@ from sqlalchemy.orm import Session
 
 from models.order import Order, OrderStatus
 from models.order_items import OrderItem
+from models.cancelation_reason import CancellationReason
+from models.user import User, UserRole
 
 from repositories.cart_item_repository import CartItemRepository
 from repositories.order_repository import OrderRepository
 from repositories.order_item_repository import OrderItemRepository
 from repositories.food_repository import FoodRepository
 from repositories.restaurant_repository import RestaurantRepository
+from repositories.delivery_repository import DeliveryRepository
+
 from services.cart_service import CartService
 from services.address_service import AddressService
 from services.discount_service import DiscountService
 from services.restaurant_service import RestaurantService
+from services.delivery_service import DeliveryService
+
 
 class OrderService:
     def __init__(self, db: Session):
@@ -53,7 +34,9 @@ class OrderService:
         self.restaruant_service = RestaurantService(db)
         self.restaurant_repository = RestaurantRepository(db)
         self.discount_service = DiscountService(db)
-
+        self.delivery_repository = DeliveryRepository(db)
+        self.delivery_service = DeliveryService(db)
+        
     def create_order(
         self,
         user_id: int,
@@ -318,8 +301,6 @@ class OrderService:
 
         return self.order_repository.get_by_restaurant_id(
             restaurant_id=restaurant_id,
-            offset=offset,
-            limit=limit,
         )
         
     def change_order_status(
@@ -353,7 +334,7 @@ class OrderService:
 
         delivery = None
 
-        if current_user.role == UserRole.DELIVERY:
+        if current_user.role == UserRole.DELIVERY_MAN:
             delivery = self.delivery_repository.get_by_order_id(order_id=order.id)
 
             if not delivery or delivery.delivery_man_id != current_user.id:
@@ -369,7 +350,7 @@ class OrderService:
                 OrderStatus.PREPARING: {OrderStatus.READY},
             }
 
-        elif current_user.role == UserRole.DELIVERY:
+        elif current_user.role == UserRole.DELIVERY_MAN:
             allowed_transitions = {
                 OrderStatus.ASSIGNED: {OrderStatus.DELIVERING},
                 OrderStatus.DELIVERING: {OrderStatus.DELIVERED},
@@ -404,7 +385,7 @@ class OrderService:
         page: int = 1,
         limit: int = 10,
     ):
-        if current_user.role != UserRole.DELIVERY:
+        if current_user.role != UserRole.DELIVERY_MAN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only delivery accounts can view available orders",

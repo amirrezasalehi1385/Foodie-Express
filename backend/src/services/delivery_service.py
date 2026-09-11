@@ -21,7 +21,7 @@ class DeliveryService:
         current_user: User,
         order_id: int,
     ):
-        if current_user.role != UserRole.DELIVERY:
+        if current_user.role != UserRole.DELIVERY_MAN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only delivery accounts can claim orders",

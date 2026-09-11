@@ -57,3 +57,18 @@ class RestaurantRepository(BaseRepository):
             .filter(Restaurant.owner_id == owner_id)
             .all()
         )
+
+    
+    def get_by_id_and_owner(
+        self,
+        restaurant_id: int,
+        owner_id: int,
+    ):
+        return (
+            self.db.query(Restaurant)
+            .filter(
+                Restaurant.id == restaurant_id,
+                Restaurant.owner_id == owner_id,
+            )
+            .first()
+        )
