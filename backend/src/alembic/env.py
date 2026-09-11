@@ -25,6 +25,7 @@ from models.wallet import Wallet
 from models.transaction import Transaction
 from models.discount import Discount
 from models.discount_usage import DiscountUsage
+from models.delivery import Delivery
 config = context.config
 
 if config.config_file_name is not None:
