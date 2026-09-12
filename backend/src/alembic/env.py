@@ -29,6 +29,7 @@ from models.delivery import Delivery
 from models.review import Review
 from models.order_status_history import OrderStatusHistory
 from models.admin_actinos_log import AdminActionLog
+from models.refresh_token import RefreshToken
 config = context.config
 
 if config.config_file_name is not None:

@@ -42,7 +42,8 @@ def register(
 
 
 # Authenticate a user with phone and password, returning a bearer access
-# token. Public endpoint. Raises 401 if credentials are invalid.
+# token and a refresh token. Public endpoint. Raises 401 if credentials
+# are invalid.
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -54,13 +55,14 @@ def login(
     auth_service = AuthService(db)
 
     try:
-        access_token = auth_service.login(
+        access_token, refresh_token = auth_service.login(
             phone=login_data.phone,
             password=login_data.password,
         )
 
         return TokenResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
         )
 
@@ -69,4 +71,60 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+from dto.auth import LoginRequest, RefreshRequest, TokenResponse
+
+
+# Exchange a valid, unrevoked refresh token for a new access/refresh
+# token pair (rotation). Public endpoint. Raises 401 if the refresh
+# token is invalid, expired, or already used.
+@router.post(
+    "/token/refresh",
+    response_model=TokenResponse,
+)
+def refresh_token(
+    refresh_data: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    auth_service = AuthService(db)
+
+    try:
+        access_token, new_refresh_token = auth_service.refresh(
+            refresh_token=refresh_data.refresh_token,
+        )
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+# Revoke a refresh token so it can no longer be used. Public endpoint
+# (no access token required — logging out with just the refresh token
+# is fine since it's already the credential being revoked).
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def logout(
+    refresh_data: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    auth_service = AuthService(db)
+
+    try:
+        auth_service.logout(refresh_token=refresh_data.refresh_token)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
         )
